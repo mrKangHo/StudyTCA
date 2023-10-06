@@ -7,16 +7,18 @@
 
 import Foundation
 import ComposableArchitecture
+import Alamofire
 
 struct SimpleReducer: Reducer {
     
     struct State: Equatable {
         var userList:Users = []
+        var erroMsg:String?
     }
     
-    enum Action: Equatable {
+    enum Action {
         case loadUsers
-        case responseUsers(TaskResult<Users>)
+        case responseUsers(Result<Users, AFError>)
     }
     
     @Dependency(\.simpleClient) var userlistClient
@@ -27,17 +29,21 @@ struct SimpleReducer: Reducer {
         case .loadUsers:
             
             return .run { send in
-                await send(.responseUsers(TaskResult{ try await self.userlistClient.fetchAll()}))
+                await send(.responseUsers(try await self.userlistClient.fetchAll()))
             }
         case .responseUsers(.success(let response)):
             state.userList = response
             return .none
         case .responseUsers(.failure(let error)):
             state.userList = []
-            return .none
+            state.erroMsg = error.errorDescription
+            
+            
         }
         
     }
     
+    
+    }
 }
 

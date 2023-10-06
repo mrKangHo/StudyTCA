@@ -26,6 +26,11 @@ class SimpleViewController: UIViewController, BindableView {
         return btn
         
     }()
+    
+    private var lbData:UITextView = {
+        let label = UITextView()
+        label.isEditable = false
+        return label    }()
 
     
     
@@ -44,20 +49,28 @@ class SimpleViewController: UIViewController, BindableView {
         super.viewDidLoad()
         self.view.backgroundColor = .white
         self.view.addSubview(btnLoad)
+        self.view.addSubview(lbData)
         
         self.btnLoad.addTarget(self, action: #selector(btnPress), for: .touchUpInside)
         self.btnLoad.pin.left().top(100).right().height(50)
+        self.lbData.pin.left().top(to: self.btnLoad.edge.bottom).right().bottom()
 
         // Do any additional setup after loading the view.
     }
     
     func bind(_ viewStore: ViewStoreOf<SimpleReducer>) {
         
-        viewStore.publisher.userList.sink { users in
+        viewStore.publisher.userList.filter{$0.isEmpty == false}.sink { users in
             
             print(users)
+            self.lbData.text = users.description
             
         }.store(in: &self.cancellables)
+        
+        viewStore.publisher.erroMsg.filter{$0?.isEmpty == false}.sink { error in
+            self.lbData.text = error
+        }.store(in: &self.cancellables)
+        
         
     }
     
